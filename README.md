@@ -5,7 +5,7 @@
 
 ## 介绍
 
-微软cn.bing翻译器，建议轻量使用，欢迎star、follow、fork：
+微软bing翻译器，支持cn.bing.com和www.bing.com，建议轻量使用，欢迎star、follow、fork。
 
 ## 适用对象
 
@@ -58,6 +58,14 @@ proxy = {'https':'http://localhost:8080'}
 translator = Translator(proxy=proxy)
 ```
 
+默认调用cn.bing.com，如需使用www.bing.com，可以在初始化的时候指定：
+
+```python
+translator = Translator(cnBing=False)
+```
+
+需要注意的是，根据bing.com的跳转规则，如果服务器判断是中国区用户访问，即使指定cnBing为False，仍然会自动跳转到cn.bing.com。
+
 ## 注意事项
 
-建议轻量级使用，微软bing翻译器默认带有防滥用措施，短时间频繁发起大量请求可能会触发拦截。
+建议轻量级使用，控制调用量和频率，微软bing翻译器默认带有防滥用措施，频繁发起大量请求可能会触发拦截。

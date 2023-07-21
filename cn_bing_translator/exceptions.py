@@ -18,3 +18,7 @@ class UnknownStatusCode(Exception):
 
 class NoDataReceived(Exception):
     """Raised when no data is received from the server."""
+
+
+class UnknownRequestType(Exception):
+    """Raised when request type is unknown."""
