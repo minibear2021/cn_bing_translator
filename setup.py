@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf8") as f:
 
 setup(
     name="cn_bing_translator",
-    version="0.0.1",
+    version="0.0.2",
     author="minibear",
     description="microsoft cn.bing translator",
     long_description=long_description,

@@ -16,11 +16,8 @@ class Translator:
     def __init__(self, fromLang: str = "auto-detect", toLang: str = "en", agent: dict = {}, proxy: dict = {}, logger=None) -> None:
         self._fromLang = fromLang
         self._toLang = toLang
-        self._ig = None
-        self._iid = None
-        self._key = None
-        self._token = None
-        self._timeout = None
+        self._ig = self._iig = self._key = self._token = None
+        self._timeout = 0
         self._session = requests.Session()
         self._session.proxies = proxy
         if not agent:
@@ -30,18 +27,15 @@ class Translator:
         self._session.headers.update({'referer': 'https://cn.bing.com/translator/'})
         self._url = ''
         self._logger = logger
-        self._update_params()
+        # self._update_params()
 
     def _update_params(self):
         """
         update params IG, IID, token, key
         """
+        self._session.cookies.clear()
         url = 'https://cn.bing.com/translator/'
         response = self._session.get(url=url)
-        # response = requests.get('https://cn.bing.com/translator/', headers=header)
-        # var params_AbusePreventionHelper = [1689738336956,"ccLhL60bQjpJ9MvZoTxZYlBRP_fNCUDi",3600000];
-        # IG:"BDEEA9DEA80F41D18B9EDDFD2A03985C",
-        # <div id="rich_tta" data-iid="translator.5026")">
         if self._logger:
             self._logger.debug('Update params.')
             self._logger.debug(f'Request url: {url}')
@@ -66,12 +60,19 @@ class Translator:
             self._timeout = int((time.time() - 600) * 1000) + int(match.group(3))
         if not (self._ig and self._iid and self._key and self._token and self._timeout):
             raise UnknownResponse
+        if self._logger:
+            self._logger.debug(f'iid: {self._iid}, ig: {self._ig}, key: {self._key}, token: {self._token}, timeout: {self._timeout}')
         self._url = f'https://cn.bing.com/ttranslatev3?isVertical=1&IG={self._ig}&IID={self._iid}'
 
     def process(self, text: str, fromLang: str = '', toLang: str = '') -> str:
         """
         translate text from origin language
         """
+        if self._timeout < int(time.time() * 1000):
+            self._ig = self._iig = self._key = self._token = None
+            self._timeout = 0
+            self._update_params()
+
         data = {
             '': '',
             'fromLang': fromLang if fromLang else self._fromLang,
@@ -81,9 +82,6 @@ class Translator:
             'key': self._key,
             'tryFetchingGenderDebiasedTranslations': 'true'
         }
-        if self._timeout < int(time.time()):
-            print('timeout, update params.')
-            self._update_params()
         response = self._session.post(url=self._url, data=data)
 
         if self._logger:
@@ -103,7 +101,18 @@ class Translator:
         if type(content) == dict:  # and content.get('statusCode'):
             # {"statusCode":205,"errorMessage":""}
             print('status code error, update params')
+            self._ig = self._iig = self._key = self._token = None
+            self._timeout = 0
             self._update_params()
+            data = {
+                '': '',
+                'fromLang': fromLang if fromLang else self._fromLang,
+                'text': f'{text}',
+                'to': toLang if toLang else self._toLang,
+                'token': self._token,
+                'key': self._key,
+                'tryFetchingGenderDebiasedTranslations': 'true'
+            }
             response = self._session.post(url=self._url, data=data)
             if self._logger:
                 self._logger.debug(f'Request url: {self._url}')
